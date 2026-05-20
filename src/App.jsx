@@ -7,6 +7,7 @@ import InputPage from './pages/InputPage';
 import GoalsPage from './pages/GoalsPage';
 import ReportPage from './pages/ReportPage';
 import BottomNav from './components/BottomNav';
+import UserMenu from './components/UserMenu';
 
 function KakeiboApp({ signOut }) {
   const [data, setData] = useState(null);
@@ -52,9 +53,7 @@ function KakeiboApp({ signOut }) {
   return (
     <div style={{ maxWidth: 430, margin: '0 auto', minHeight: '100vh', background: '#f5f5f5', paddingBottom: 72 }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 16px 0' }}>
-        <button onClick={signOut} style={{ background: 'none', border: 'none', fontSize: 12, color: '#aaa', cursor: 'pointer' }}>
-          ログアウト
-        </button>
+        <UserMenu signOut={signOut} />
       </div>
       <Page
         data={data}
