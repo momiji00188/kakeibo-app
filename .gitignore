@@ -4,3 +4,8 @@ node_modules
 .amplify
 amplify_outputs*
 amplifyconfiguration*
+
+# auto-generated
+activity_report_*.md
+docs/
+.claude/settings.local.json
