@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(pnpm build *)",
-      "Bash(ipconfig)"
+      "Bash(ipconfig)",
+      "Bash(pnpm dev *)",
+      "Bash(pnpm approve-builds *)"
     ]
   }
 }
