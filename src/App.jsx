@@ -9,7 +9,7 @@ import BottomNav from './components/BottomNav';
 export default function App() {
   const [data, setData] = useState(load);
   const [tab, setTab] = useState('home');
-  const monthKey = currentMonthKey();
+  const [inputMonth, setInputMonth] = useState(currentMonthKey);
 
   function update(next) {
     setData(next);
@@ -19,7 +19,7 @@ export default function App() {
   function updateMonth(variable) {
     update({
       ...data,
-      months: { ...data.months, [monthKey]: { ...data.months[monthKey], variable } },
+      months: { ...data.months, [inputMonth]: { ...data.months[inputMonth], variable } },
     });
   }
 
@@ -31,7 +31,7 @@ export default function App() {
     update({ ...data, goals });
   }
 
-  const monthData = data.months[monthKey] || { variable: {} };
+  const monthData = data.months[inputMonth] || { variable: {} };
 
   const pages = { home: Home, input: InputPage, goals: GoalsPage, report: ReportPage };
   const Page = pages[tab];
@@ -41,10 +41,11 @@ export default function App() {
       <Page
         data={data}
         monthData={monthData}
-        monthKey={monthKey}
+        monthKey={inputMonth}
         onUpdateMonth={updateMonth}
         onUpdateSettings={updateSettings}
         onUpdateGoals={updateGoals}
+        onChangeInputMonth={setInputMonth}
       />
       <BottomNav tab={tab} onTab={setTab} />
     </div>

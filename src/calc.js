@@ -1,14 +1,11 @@
 export const FIXED_LABELS = {
   rent: '家賃',
   water: '水道',
-  wifi: 'WiFi',
   gas: 'ガス',
   electricity: '電気',
-  rakuten: '楽天',
   phone: 'スマホ',
+  wifi: 'WiFi',
   nisa: 'NISA',
-  gym: 'Gym',
-  pc_loan: 'PC（福銀）',
 };
 
 export const VARIABLE_LABELS = {
@@ -46,6 +43,10 @@ export function goalMonthly(g) {
 
 export function calcGoalsMonthly(goals) {
   return goals.reduce((s, g) => s + goalMonthly(g), 0);
+}
+
+export function availableForVariable(settings, goals) {
+  return Math.max(0, (Number(settings.income) || 0) - calcFixed(settings) - calcGoalsMonthly(goals));
 }
 
 export function calcSummary(settings, monthData, goals) {

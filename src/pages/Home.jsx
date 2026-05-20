@@ -1,12 +1,51 @@
-import { calcSummary, goalMonthly, remainingMonths } from '../calc';
+import { calcSummary, goalMonthly, remainingMonths, availableForVariable, VARIABLE_LABELS } from '../calc';
+import { currentMonthKey } from '../store';
 
-export default function Home({ data, monthData }) {
+function MonthNav({ month, onChange }) {
+  const [y, m] = month.split('-').map(Number);
+  const prev = () => {
+    const d = new Date(y, m - 2, 1);
+    onChange(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  };
+  const next = () => {
+    const d = new Date(y, m, 1);
+    const nxt = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (nxt <= currentMonthKey()) onChange(nxt);
+  };
+  const isCurrentMonth = month === currentMonthKey();
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0 12px' }}>
+      <button onClick={prev} style={{ background: 'none', border: 'none', fontSize: 22, color: '#555', cursor: 'pointer', padding: '0 4px' }}>‹</button>
+      <h2 style={{ fontSize: 17, color: '#333', fontWeight: 'bold' }}>
+        {y}年{m}月のサマリー{isCurrentMonth ? '' : ' (過去)'}
+      </h2>
+      <button onClick={next} disabled={isCurrentMonth} style={{ background: 'none', border: 'none', fontSize: 22, color: isCurrentMonth ? '#ddd' : '#555', cursor: isCurrentMonth ? 'default' : 'pointer', padding: '0 4px' }}>›</button>
+    </div>
+  );
+}
+
+export default function Home({ data, monthData, monthKey, onChangeInputMonth }) {
   const { fixed, variable, goalsMonthly, total, income, balance } = calcSummary(data.settings, monthData, data.goals);
   const plus = balance >= 0;
 
+  const available = availableForVariable(data.settings, data.goals);
+  const budgets = data.settings.variableBudgets || {};
+  const hasBudgets = Object.values(budgets).some(v => Number(v) > 0);
+
+  const missingIncome = !income;
+  const missingRent = !data.settings.fixedCosts.rent;
+
   return (
     <div style={{ padding: '0 16px 16px' }}>
-      <h2 style={{ padding: '20px 0 12px', fontSize: 17, color: '#333' }}>今月のサマリー</h2>
+      <MonthNav month={monthKey} onChange={onChangeInputMonth} />
+
+      {/* 警告 */}
+      {(missingIncome || missingRent) && (
+        <div style={{ background: '#fff3e0', borderRadius: 12, padding: '10px 14px', marginBottom: 12, fontSize: 13, color: '#e65100' }}>
+          {missingIncome && <div>・収入が未入力です（入力タブから設定してください）</div>}
+          {missingRent && <div>・家賃が未入力です（固定費タブから設定してください）</div>}
+        </div>
+      )}
 
       {/* 損益 */}
       <div style={{
@@ -45,10 +84,46 @@ export default function Home({ data, monthData }) {
         </div>
       </div>
 
+      {/* 変動費カテゴリ別 */}
+      <div style={{ background: 'white', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div style={{ fontSize: 13, fontWeight: 'bold', color: '#555' }}>変動費の内訳</div>
+          <div style={{ fontSize: 12, color: '#999' }}>使える額 {available.toLocaleString()}円</div>
+        </div>
+        {Object.entries(VARIABLE_LABELS).map(([key, label]) => {
+          const spent = Number(monthData.variable?.[key] || 0);
+          const budget = Number(budgets[key] || 0);
+          if (!hasBudgets && spent === 0) return null;
+          const pct = budget > 0 ? Math.min(100, Math.round(spent / budget * 100)) : null;
+          const over = budget > 0 && spent > budget;
+          return (
+            <div key={key} style={{ marginBottom: hasBudgets ? 10 : 0, paddingBottom: hasBudgets ? 0 : 4, borderBottom: !hasBudgets ? '1px solid #f5f5f5' : 'none' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: hasBudgets ? 4 : 0 }}>
+                <span style={{ fontSize: 13, color: '#555' }}>{label}</span>
+                <span style={{ fontSize: 13, color: over ? '#c62828' : '#333' }}>
+                  {spent.toLocaleString()}円{budget > 0 ? ` / ${budget.toLocaleString()}円` : ''}
+                </span>
+              </div>
+              {hasBudgets && budget > 0 && (
+                <div style={{ background: '#f0f0f0', borderRadius: 4, height: 6, overflow: 'hidden' }}>
+                  <div style={{ background: over ? '#ef5350' : '#4CAF50', width: `${pct}%`, height: '100%', borderRadius: 4, transition: 'width 0.3s' }} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {!hasBudgets && variable === 0 && (
+          <div style={{ fontSize: 12, color: '#ccc', textAlign: 'center', padding: '10px 0' }}>まだ変動費が入力されていません</div>
+        )}
+        {!hasBudgets && (
+          <div style={{ fontSize: 11, color: '#bbb', marginTop: 8, textAlign: 'center' }}>「予算設定」タブで各カテゴリの目標を設定できます</div>
+        )}
+      </div>
+
       {/* やりたいこと */}
       {data.goals.length > 0 && (
         <div style={{ background: 'white', borderRadius: 16, padding: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 'bold', color: '#555', marginBottom: 10 }}>🎯 やりたいこと</div>
+          <div style={{ fontSize: 13, fontWeight: 'bold', color: '#555', marginBottom: 10 }}>やりたいこと</div>
           {data.goals.map(g => {
             const months = remainingMonths(g.targetYearMonth);
             const monthly = goalMonthly(g);
