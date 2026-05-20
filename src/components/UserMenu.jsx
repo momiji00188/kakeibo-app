@@ -1,13 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { fetchUserAttributes, updateUserAttribute, updatePassword } from 'aws-amplify/auth';
+import { fetchUserAttributes, updatePassword } from 'aws-amplify/auth';
 
 export default function UserMenu({ signOut }) {
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(false);
-  const [name, setName] = useState('');
-  const [editName, setEditName] = useState('');
   const [email, setEmail] = useState('');
-  const [nameMsg, setNameMsg] = useState('');
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
@@ -15,11 +12,7 @@ export default function UserMenu({ signOut }) {
   const ref = useRef();
 
   useEffect(() => {
-    fetchUserAttributes().then(attrs => {
-      setName(attrs.name || '');
-      setEditName(attrs.name || '');
-      setEmail(attrs.email || '');
-    });
+    fetchUserAttributes().then(attrs => setEmail(attrs.email || ''));
   }, []);
 
   useEffect(() => {
@@ -29,16 +22,6 @@ export default function UserMenu({ signOut }) {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
-
-  async function handleSaveName() {
-    try {
-      await updateUserAttribute({ userAttribute: { attributeKey: 'name', value: editName } });
-      setName(editName);
-      setNameMsg('保存しました');
-    } catch {
-      setNameMsg('保存に失敗しました');
-    }
-  }
 
   async function handleChangePw() {
     setPwMsg('');
@@ -52,8 +35,6 @@ export default function UserMenu({ signOut }) {
     }
   }
 
-  const initial = name ? name[0].toUpperCase() : '?';
-
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button onClick={() => setOpen(o => !o)} style={{
@@ -61,7 +42,7 @@ export default function UserMenu({ signOut }) {
         border: 'none', cursor: 'pointer', color: 'white', fontWeight: 'bold', fontSize: 14,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        {initial}
+        👤
       </button>
 
       {open && (
@@ -87,7 +68,6 @@ export default function UserMenu({ signOut }) {
         }} onClick={() => setPage(false)}>
           <div style={{
             background: 'white', borderRadius: 20, padding: 24, width: '100%', maxWidth: 380,
-            maxHeight: '90vh', overflowY: 'auto',
           }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
               <h2 style={{ fontSize: 17, margin: 0, color: '#333' }}>マイページ</h2>
@@ -95,17 +75,7 @@ export default function UserMenu({ signOut }) {
             </div>
 
             <div style={sectionStyle}>
-              <label style={labelStyle}>名前</label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input value={editName} onChange={e => { setEditName(e.target.value); setNameMsg(''); }}
-                  style={inputStyle} placeholder="名前を入力" />
-                <button onClick={handleSaveName} style={btnStyle}>保存</button>
-              </div>
-              {nameMsg && <div style={{ fontSize: 12, color: '#4CAF50', marginTop: 4 }}>{nameMsg}</div>}
-            </div>
-
-            <div style={sectionStyle}>
-              <label style={labelStyle}>メールアドレス（ID）</label>
+              <label style={labelStyle}>ID（メールアドレス）</label>
               <div style={{ fontSize: 14, color: '#555', padding: '8px 0' }}>{email}</div>
             </div>
 
@@ -143,5 +113,5 @@ const inputStyle = {
 };
 const btnStyle = {
   padding: '10px 16px', background: '#4CAF50', color: 'white',
-  border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 14, whiteSpace: 'nowrap',
+  border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 14,
 };
