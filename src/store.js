@@ -1,4 +1,6 @@
-const KEY = 'kakeibo_v1';
+import { generateClient } from 'aws-amplify/data';
+
+const client = generateClient();
 
 const DEFAULT = {
   settings: {
@@ -15,29 +17,51 @@ const DEFAULT = {
   months: {},
 };
 
-export function load() {
+let cachedId = null;
+
+export async function load() {
   try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return structuredClone(DEFAULT);
-    const parsed = JSON.parse(raw);
+    const { data: items, errors } = await client.models.UserData.list();
+    if (errors) { console.error('load error:', JSON.stringify(errors)); return structuredClone(DEFAULT); }
+    if (!items || items.length === 0) return structuredClone(DEFAULT);
+    cachedId = items[0].id;
+    const raw = items[0].payload;
+    const payload = typeof raw === 'string' ? JSON.parse(raw) : raw;
     const def = structuredClone(DEFAULT);
     return {
       ...def,
-      ...parsed,
+      ...payload,
       settings: {
         ...def.settings,
-        ...parsed.settings,
-        fixedCosts: { ...def.settings.fixedCosts, ...parsed.settings?.fixedCosts },
-        variableBudgets: { ...def.settings.variableBudgets, ...parsed.settings?.variableBudgets },
+        ...payload.settings,
+        fixedCosts: { ...def.settings.fixedCosts, ...payload.settings?.fixedCosts },
+        variableBudgets: { ...def.settings.variableBudgets, ...payload.settings?.variableBudgets },
       },
     };
-  } catch {
+  } catch (e) {
+    console.error('load exception:', e);
     return structuredClone(DEFAULT);
   }
 }
 
-export function save(data) {
-  localStorage.setItem(KEY, JSON.stringify(data));
+export async function save(data) {
+  try {
+    if (cachedId) {
+      const { errors } = await client.models.UserData.update({ id: cachedId, payload: JSON.stringify(data) });
+      if (errors) console.error('save update error:', JSON.stringify(errors));
+    } else {
+      const { data: item, errors } = await client.models.UserData.create({ payload: JSON.stringify(data) });
+      if (errors) {
+        console.error('save create error:', JSON.stringify(errors));
+      } else if (item) {
+        cachedId = item.id;
+      } else {
+        console.error('save create: data is null, unknown error');
+      }
+    }
+  } catch (e) {
+    console.error('save exception:', e);
+  }
 }
 
 export function currentMonthKey() {
