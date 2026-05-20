@@ -143,10 +143,7 @@ export default function GoalsPage({ data, onUpdateGoals }) {
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                   <span style={{ fontSize: 16, fontWeight: 'bold', color: '#333' }}>{g.name}</span>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <span style={{ fontSize: 11, color: '#bbb' }}>ダブルタップで編集</span>
-                    <button onClick={() => remove(g.id)} style={{ background: '#ffebee', border: 'none', borderRadius: 8, color: '#e53935', cursor: 'pointer', fontSize: 12, fontWeight: 'bold', padding: '4px 10px' }}>削除</button>
-                  </div>
+                  <button onClick={() => remove(g.id)} style={{ background: '#ffebee', border: 'none', borderRadius: 8, color: '#e53935', cursor: 'pointer', fontSize: 12, fontWeight: 'bold', padding: '4px 10px' }}>削除</button>
                 </div>
                 <div style={{ fontSize: 12, color: '#999', marginBottom: 10 }}>
                   目標 {g.amount.toLocaleString()}円 ／ {g.targetYearMonth.replace('-', '年')}月まで ／ 月{monthly.toLocaleString()}円 × {months}ヶ月
